@@ -1,0 +1,90 @@
+.mng-list {
+    display: table;
+    width: 100%;
+}
+
+.mng-list svg {
+    width: 13px;
+    height: 13px;
+    margin-right: 3px;
+}
+
+.change-stock svg {
+    width: 32px;
+    height: 32px;
+    transform: rotate(90deg);
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.mng-item {
+    display: table-row;
+    -webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    -ms-transition: all .3s;
+    -o-transition: all .3s;
+    transition: all .3s;
+}
+
+.mng-item:nth-child(odd) {
+    background-color: rgba(160, 160, 160, 0.12);
+}
+
+.mng-item.not-available {
+    opacity: .5;
+}
+
+.mng-item > span {
+    display: table-cell;
+    padding: 10px;
+    position: relative;
+    -webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    -ms-transition: all .3s;
+    -o-transition: all .3s;
+    transition: all .3s;
+}
+
+.padding-bottom > span {
+    padding-bottom: 40px;
+}
+
+.mng-item .mng-cnt,
+.mng-item .mng-price {
+    text-align: center;
+}
+
+.mng-item .mng-name {
+    max-width: 240px;
+}
+
+.mng-item.head > span {
+    background-color: #427ce3;
+    color: #fff;
+    font-weight: 700;
+    padding: 10px;
+}
+
+.change-field {
+    display: none;
+    position: absolute;
+    bottom: 5px;
+    width: 100%;
+}
+
+.change-field input {
+    width: 90%;
+    border: 1px solid #ccc !important;
+    padding: 5px;
+}
+
+.mng-stock .common_select .common_select-link {
+    padding: 0;
+    width: 140px;
+}
+
+.mng-button {
+    text-align: center;
+    padding: 20px 0;
+}
