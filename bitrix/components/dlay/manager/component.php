@@ -17,34 +17,75 @@ $user_id = 15066;
 
 if (!empty($post["action"])) {
     if ($post["action"] == "write") {
-        echo '<pre>';
-        print_r($post);
-        echo '</pre>';
 
-        $el = new CIBlockElement;
-
-        $PROP      = array();
-        $PROP[655] = $post["order"];
-
-        foreach ($post["product_id"] as $i => $value) {
-            $PROP[656][$i]["VALUE"] = $post["product_id"][$i].'|'.$post["stock"][$i];
-            if ($post["stock"][$i] == "change") {
-                $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i].'|'.$post["new_name"][$i].'|'.$post["new_cnt"][$i]."|".$post["new_price"][$i];
-            }
+        // Проверка на существование заказа
+        $order_exist_id = '';
+        $test_orders = CIBlockElement::getList(
+            array(),
+            array("IBLOCK_ID" => $order_id, "PROPERTY_order" => $post["order"]),
+            false,
+            array(),
+            array("ID", "IBLOCK_ID")
+        );
+        while ($test_order = $test_orders->GetNext()) {
+            $order_exist_id = $test_order["ID"];
         }
 
-        $arLoadProductArray = array(
-            "MODIFIED_BY"     => $USER->GetID(),
-            "IBLOCK_ID"       => $order_id,
-            "PROPERTY_VALUES" => $PROP,
-            "NAME"            => 'Заказ №' . $post["order"],
-            "ACTIVE"          => "Y",
-        );
+        if (empty($order_exist_id)) {
+            $el = new CIBlockElement;
 
-        if ($PRODUCT_ID = $el->Add($arLoadProductArray))
-            $arResult["error"] = "Заказ успешно сохранен!";
-        else
-            $arResult["error"] = "Error: " . $el->LAST_ERROR;
+            $PROP      = array();
+            $PROP[655] = $post["order"];
+
+            foreach ($post["product_id"] as $i => $value) {
+                $PROP[656][$i]["VALUE"] = $post["product_id"][$i].'|'.$post["stock"][$i];
+                if ($post["stock"][$i] == "change") {
+                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i].'|'.$post["new_name"][$i].'|'.$post["new_cnt"][$i]."|".$post["new_price"][$i];
+                }
+            }
+
+            $arLoadProductArray = array(
+                "MODIFIED_BY"     => $USER->GetID(),
+                "IBLOCK_ID"       => $order_id,
+                "PROPERTY_VALUES" => $PROP,
+                "NAME"            => 'Заказ №' . $post["order"],
+                "ACTIVE"          => "Y",
+            );
+
+            if ($PRODUCT_ID = $el->Add($arLoadProductArray))
+                $arResult["error"] = "Заказ успешно сохранен!";
+            else
+                $arResult["error"] = "Error: " . $el->LAST_ERROR;
+        }
+        else {
+            $el = new CIBlockElement;
+
+            $PROP      = array();
+            $PROP[655] = $post["order"];
+
+            foreach ($post["product_id"] as $i => $value) {
+                $PROP[656][$i]["VALUE"] = $post["product_id"][$i].'|'.$post["stock"][$i];
+                if ($post["stock"][$i] == "change") {
+                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i].'|'.$post["new_name"][$i].'|'.$post["new_cnt"][$i]."|".$post["new_price"][$i];
+                }
+            }
+
+            $arLoadProductArray = array(
+                "MODIFIED_BY"     => $USER->GetID(),
+                "IBLOCK_ID"       => $order_id,
+                "PROPERTY_VALUES" => $PROP,
+                "NAME"            => 'Заказ №' . $post["order"],
+                "ACTIVE"          => "Y",
+            );
+
+            $PRODUCT_ID = $order_exist_id;
+            $res = $el->Update($PRODUCT_ID, $arLoadProductArray);
+
+            if ($res)
+                $arResult["error"] = "Заказ успешно обновлен!";
+            else
+                $arResult["error"] = "Error: " . $res->LAST_ERROR;
+        }
     } else $arResult["error"] = 'Неизвестное действие!';
 } elseif (!empty($get["order"])) {
     $order = Sale\Order::load(intval($get["order"]));
