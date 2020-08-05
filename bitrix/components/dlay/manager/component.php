@@ -20,7 +20,7 @@ if (!empty($post["action"])) {
 
         // Проверка на существование заказа
         $order_exist_id = '';
-        $test_orders = CIBlockElement::getList(
+        $test_orders    = CIBlockElement::getList(
             array(),
             array("IBLOCK_ID" => $order_id, "PROPERTY_order" => $post["order"]),
             false,
@@ -38,9 +38,9 @@ if (!empty($post["action"])) {
             $PROP[655] = $post["order"];
 
             foreach ($post["product_id"] as $i => $value) {
-                $PROP[656][$i]["VALUE"] = $post["product_id"][$i].'|'.$post["stock"][$i];
+                $PROP[656][$i]["VALUE"] = $post["product_id"][$i] . '|' . $post["stock"][$i];
                 if ($post["stock"][$i] == "change") {
-                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i].'|'.$post["new_name"][$i].'|'.$post["new_cnt"][$i]."|".$post["new_price"][$i];
+                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i] . '|' . $post["new_name"][$i] . '|' . $post["new_cnt"][$i] . "|" . $post["new_price"][$i];
                 }
             }
 
@@ -56,17 +56,16 @@ if (!empty($post["action"])) {
                 $arResult["error"] = "Заказ успешно сохранен!";
             else
                 $arResult["error"] = "Error: " . $el->LAST_ERROR;
-        }
-        else {
+        } else {
             $el = new CIBlockElement;
 
             $PROP      = array();
             $PROP[655] = $post["order"];
 
             foreach ($post["product_id"] as $i => $value) {
-                $PROP[656][$i]["VALUE"] = $post["product_id"][$i].'|'.$post["stock"][$i];
+                $PROP[656][$i]["VALUE"] = $post["product_id"][$i] . '|' . $post["stock"][$i];
                 if ($post["stock"][$i] == "change") {
-                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i].'|'.$post["new_name"][$i].'|'.$post["new_cnt"][$i]."|".$post["new_price"][$i];
+                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i] . '|' . $post["new_name"][$i] . '|' . $post["new_cnt"][$i] . "|" . $post["new_price"][$i];
                 }
             }
 
@@ -79,7 +78,7 @@ if (!empty($post["action"])) {
             );
 
             $PRODUCT_ID = $order_exist_id;
-            $res = $el->Update($PRODUCT_ID, $arLoadProductArray);
+            $res        = $el->Update($PRODUCT_ID, $arLoadProductArray);
 
             if ($res)
                 $arResult["error"] = "Заказ успешно обновлен!";
@@ -127,7 +126,34 @@ if (!empty($post["action"])) {
     } else $arResult["error"] = 'Заказ с таким номером не найден!';
 } elseif (!empty($get["action"])) {
     if ($get["action"] == "show_all") {
-        echo 'Номера заказов с товарами';
+        $arResult["show"] = "all";
+        if (CModule::IncludeModule("sale")):
+            $arFilter = array("@STATUS_ID" => array("N", "S"));
+            $rsSales  = CSaleOrder::GetList(array("DATE_INSERT" => "ASC"), $arFilter);
+            while ($arSales = $rsSales->Fetch()) {
+                $order = Sale\Order::load(intval($arSales["ID"]));
+                if (!empty($order)) {
+                    $basket = $order->getBasket();
+                    $ids = array();
+                    foreach ($basket as $basketItem) {
+                        $ids[] = $basketItem->getProductId();
+                    }
+                    if (!empty($ids)) {
+                        $cnt = CIBlockElement::GetList(
+                            array(),
+                            array("IBLOCK_ID" => $catalog_id, "ID" => $ids, "PROPERTY_provider" => $user_id),
+                            array(),
+                            false,
+                            array()
+                        );
+                        if (!empty($cnt)) {
+                            $arResult["items"][$arSales["ID"]]["id"] = $arSales["ID"];
+                            $arResult["items"][$arSales["ID"]]["date"] = $order->getDateInsert();
+                        }
+                    }
+                }
+            }
+        endif;
     } else $arResult["error"] = 'Неизвестное действие!';
 } else $arResult["error"] = 'Не указан номер заказа!';
 

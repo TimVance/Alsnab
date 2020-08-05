@@ -4,6 +4,11 @@
  * @var array $arResult
  */
 
+/*
+echo '<pre>';
+print_r($arResult);
+echo '</pre>';
+*/
 
 ?><div class="mng-wrapper"><?
 
@@ -88,12 +93,12 @@ if ($arResult["show"] == "order"): ?>
             <div class="mng-button"><input class="btn btn-lg btn-default has-ripple" type="submit" value="Отправить"></div>
         </form>
     </div>
+    <div class="mng-show-all"><a href="/manager/?action=show_all">Все заказы</a></div>
+<? elseif ($arResult["show"] == "all"): ?>
+    <? foreach ($arResult["items"] as $item): ?>
+        <div>
+            <a href="/manager/?order=<?=$item["id"]?>">Заказ №<?=$item["id"]?> от <?=date("d.m.Y", strtotime($item["date"]))?></a>
+        </div>
+    <? endforeach; ?>
 <? endif; ?>
-
 </div>
-
-<?php
-/*
-echo '<pre>';
-print_r($arResult);
-echo '</pre>';
