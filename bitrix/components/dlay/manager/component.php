@@ -5,28 +5,61 @@ use Bitrix\Main\Context;
 
 $request = Context::getCurrent()->getRequest();
 $get     = $request->getQueryList();
+$post    = $request->getPostList();
 
 global $USER;
 
-$catalog_id = 29;
+$catalog_id        = 29;
+$order_id          = 37;
 $arResult["error"] = '';
 //$user_id = $USER->GetId();
 $user_id = 15066;
 
-if (!empty($get["order"])) {
+if (!empty($post["action"])) {
+    if ($post["action"] == "write") {
+        echo '<pre>';
+        print_r($post);
+        echo '</pre>';
+
+        $el = new CIBlockElement;
+
+        $PROP      = array();
+        $PROP[655] = $post["order"];
+
+        foreach ($post["product_id"] as $i => $value) {
+            $PROP[656][$i]["VALUE"] = $post["product_id"][$i].'|'.$post["stock"][$i];
+            if ($post["stock"][$i] == "change") {
+                $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i].'|'.$post["new_name"][$i].'|'.$post["new_cnt"][$i]."|".$post["new_price"][$i];
+            }
+        }
+
+        $arLoadProductArray = array(
+            "MODIFIED_BY"     => $USER->GetID(),
+            "IBLOCK_ID"       => $order_id,
+            "PROPERTY_VALUES" => $PROP,
+            "NAME"            => 'Заказ №' . $post["order"],
+            "ACTIVE"          => "Y",
+        );
+
+        if ($PRODUCT_ID = $el->Add($arLoadProductArray))
+            $arResult["error"] = "Заказ успешно сохранен!";
+        else
+            $arResult["error"] = "Error: " . $el->LAST_ERROR;
+    } else $arResult["error"] = 'Неизвестное действие!';
+} elseif (!empty($get["order"])) {
     $order = Sale\Order::load(intval($get["order"]));
     if (!empty($order)) {
         $basket = $order->getBasket();
 
         $arResult["show"] = "order";
-        $arResult["id"] = intval($get["order"]);
-        $arResult["sum"] = $basket->getPrice();
+        $arResult["id"]   = intval($get["order"]);
+        $arResult["sum"]  = $basket->getPrice();
         $arResult["date"] = $order->getDateInsert();
 
-        $ids    = [];
+        $ids = [];
         foreach ($basket as $basketItem) {
-            $ids[] = $basketItem->getProductId();
-            $arResult["items"][$basketItem->getProductId()]["price"] = $basketItem->getPrice();
+            $ids[]                                                      = $basketItem->getProductId();
+            $arResult["items"][$basketItem->getProductId()]["price"]    = $basketItem->getPrice();
             $arResult["items"][$basketItem->getProductId()]["quantity"] = $basketItem->getQuantity();
         }
         if (!empty($ids)) {
@@ -35,28 +68,26 @@ if (!empty($get["order"])) {
                 array("IBLOCK_ID" => $catalog_id, "ACTIVE" => "Y", "ID" => $ids),
                 false,
                 array(),
-                array("ID", "NAME", "PROPERTY_provider", "PROPERTY_CML2_ARTICLE",
-                    "DETAIL_PAGE_URL")
+                array(
+                    "ID", "NAME", "PROPERTY_provider", "PROPERTY_CML2_ARTICLE",
+                    "DETAIL_PAGE_URL"
+                )
             );
             while ($ob = $res->GetNext()) {
                 if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"]) {
+                    $arResult["items"][$ob["ID"]]["id"]   = $ob["ID"];
                     $arResult["items"][$ob["ID"]]["name"] = $ob["NAME"];
-                    $arResult["items"][$ob["ID"]]["art"] = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
+                    $arResult["items"][$ob["ID"]]["art"]  = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
                     $arResult["items"][$ob["ID"]]["link"] = $ob["DETAIL_PAGE_URL"];
-                    $arResult["items"][$ob["ID"]]["pro"] = $ob["PROPERTY_PROVIDER_VALUE"];
-                }
-                else unset($arResult["items"][$ob["ID"]]);
+                    $arResult["items"][$ob["ID"]]["pro"]  = $ob["PROPERTY_PROVIDER_VALUE"];
+                } else unset($arResult["items"][$ob["ID"]]);
             }
         }
-    }
-    else $arResult["error"] = 'Заказ с таким номером не найден!';
-}
-elseif (!empty($get["action"])) {
+    } else $arResult["error"] = 'Заказ с таким номером не найден!';
+} elseif (!empty($get["action"])) {
     if ($get["action"] == "show_all") {
         echo 'Номера заказов с товарами';
-    }
-    else $arResult["error"] = 'Неизвестное действие!';
-}
-else $arResult["error"] = 'Не указан номер заказа!';
+    } else $arResult["error"] = 'Неизвестное действие!';
+} else $arResult["error"] = 'Не указан номер заказа!';
 
 $this->IncludeComponentTemplate();
