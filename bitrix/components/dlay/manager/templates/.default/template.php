@@ -81,7 +81,13 @@ if ($arResult["show"] == "order"): ?>
                 <? endforeach; ?>
                 <div class="mng-item head">
                     <span class="mng-check"><input type="checkbox"></span>
-                    <span class="mng-art"></span>
+                    <span class="mng-art">
+                        <select class="js-change-stock-all">
+                            <option value="available">В наличии</option>
+                            <option value="change">Заменить</option>
+                            <option value="no">Нет в наличии</option>
+                        </select>
+                    </span>
                     <span class="mng-name"></span>
                     <span class="mng-cnt">Итог:</span>
                     <span class="mng-price">

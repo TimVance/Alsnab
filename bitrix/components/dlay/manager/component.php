@@ -132,10 +132,9 @@ if (!empty($post["action"])) {
                 }
             }
         } else $arResult["error"] = 'Заказ с таким номером не найден!';
-    }
-    else {
+    } else {
         $order = Sale\Order::load(intval($get["order"]));
-        $ids = [];
+        $ids   = [];
         if (!empty($order)) {
             $basket = $order->getBasket();
 
@@ -170,7 +169,7 @@ if (!empty($post["action"])) {
                     } else unset($arResult["items"][$ob["ID"]]);
                 }
             }
-            $res_order = CIBlockElement::GetList(
+            $res_order      = CIBlockElement::GetList(
                 array(),
                 array("IBLOCK_ID" => $order_id, "ACTIVE" => "Y", "PROPERTY_order" => $arResult["id"]),
                 false,
@@ -179,18 +178,18 @@ if (!empty($post["action"])) {
             );
             $order_elements = [];
             while ($ob_order = $res_order->GetNextElement()) {
-                $ob_props = $ob_order->GetProperties();
+                $ob_props       = $ob_order->GetProperties();
                 $order_elements = $ob_props["elements"];
             }
             foreach ($order_elements["VALUE"] as $i => $order_el) {
-                $item_info = explode("|", $order_el);
+                $item_info                                 = explode("|", $order_el);
                 $arResult["items"][$item_info[0]]["stock"] = $item_info[1];
-                $description = $order_elements["DESCRIPTION"][$i];
+                $description                               = $order_elements["DESCRIPTION"][$i];
                 if (!empty($description)) {
-                    $desc_info = explode("|", $description);
-                    $arResult["items"][$item_info[0]]["new_art"] = (!empty($desc_info[0]) ? $desc_info[0] : '');
-                    $arResult["items"][$item_info[0]]["new_name"] = (!empty($desc_info[1]) ? $desc_info[1] : '');
-                    $arResult["items"][$item_info[0]]["new_cnt"] = (!empty($desc_info[2]) ? $desc_info[2] : '');
+                    $desc_info                                     = explode("|", $description);
+                    $arResult["items"][$item_info[0]]["new_art"]   = (!empty($desc_info[0]) ? $desc_info[0] : '');
+                    $arResult["items"][$item_info[0]]["new_name"]  = (!empty($desc_info[1]) ? $desc_info[1] : '');
+                    $arResult["items"][$item_info[0]]["new_cnt"]   = (!empty($desc_info[2]) ? $desc_info[2] : '');
                     $arResult["items"][$item_info[0]]["new_price"] = (!empty($desc_info[3]) ? $desc_info[3] : '');
                 }
             }
@@ -206,7 +205,7 @@ if (!empty($post["action"])) {
                 $order = Sale\Order::load(intval($arSales["ID"]));
                 if (!empty($order)) {
                     $basket = $order->getBasket();
-                    $ids = array();
+                    $ids    = array();
                     foreach ($basket as $basketItem) {
                         $ids[] = $basketItem->getProductId();
                     }
@@ -219,7 +218,7 @@ if (!empty($post["action"])) {
                             array()
                         );
                         if (!empty($cnt)) {
-                            $arResult["items"][$arSales["ID"]]["id"] = $arSales["ID"];
+                            $arResult["items"][$arSales["ID"]]["id"]   = $arSales["ID"];
                             $arResult["items"][$arSales["ID"]]["date"] = $order->getDateInsert();
                         }
                     }
