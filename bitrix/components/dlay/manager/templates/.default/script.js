@@ -30,4 +30,6 @@ $(function() {
         else inputs.prop("checked", false);
     });
 
+    $(".js-change-stock").change();
+
 });

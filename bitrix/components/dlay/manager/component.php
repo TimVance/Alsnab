@@ -87,43 +87,115 @@ if (!empty($post["action"])) {
         }
     } else $arResult["error"] = 'Неизвестное действие!';
 } elseif (!empty($get["order"])) {
-    $order = Sale\Order::load(intval($get["order"]));
-    if (!empty($order)) {
-        $basket = $order->getBasket();
+    $res_orders = CIBlockElement::GetList(
+        array(),
+        array("IBLOCK_ID" => $order_id, "ACTIVE" => "Y", "PROPERTY_id" => intval($get["order"])),
+        array(),
+        array(),
+        array()
+    );
+    if (empty($res_orders)) {
+        $order = Sale\Order::load(intval($get["order"]));
+        if (!empty($order)) {
+            $basket = $order->getBasket();
 
-        $arResult["show"] = "order";
-        $arResult["id"]   = intval($get["order"]);
-        $arResult["sum"]  = $basket->getPrice();
-        $arResult["date"] = $order->getDateInsert();
+            $arResult["show"] = "order";
+            $arResult["id"]   = intval($get["order"]);
+            $arResult["sum"]  = $basket->getPrice();
+            $arResult["date"] = $order->getDateInsert();
 
+            $ids = [];
+            foreach ($basket as $basketItem) {
+                $ids[]                                                      = $basketItem->getProductId();
+                $arResult["items"][$basketItem->getProductId()]["price"]    = $basketItem->getPrice();
+                $arResult["items"][$basketItem->getProductId()]["quantity"] = $basketItem->getQuantity();
+            }
+            if (!empty($ids)) {
+                $res = CIBlockElement::GetList(
+                    array(),
+                    array("IBLOCK_ID" => $catalog_id, "ACTIVE" => "Y", "ID" => $ids),
+                    false,
+                    array(),
+                    array(
+                        "ID", "NAME", "PROPERTY_provider", "PROPERTY_CML2_ARTICLE",
+                        "DETAIL_PAGE_URL"
+                    )
+                );
+                while ($ob = $res->GetNext()) {
+                    if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"]) {
+                        $arResult["items"][$ob["ID"]]["id"]   = $ob["ID"];
+                        $arResult["items"][$ob["ID"]]["name"] = $ob["NAME"];
+                        $arResult["items"][$ob["ID"]]["art"]  = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
+                        $arResult["items"][$ob["ID"]]["link"] = $ob["DETAIL_PAGE_URL"];
+                        $arResult["items"][$ob["ID"]]["pro"]  = $ob["PROPERTY_PROVIDER_VALUE"];
+                    } else unset($arResult["items"][$ob["ID"]]);
+                }
+            }
+        } else $arResult["error"] = 'Заказ с таким номером не найден!';
+    }
+    else {
+        $order = Sale\Order::load(intval($get["order"]));
         $ids = [];
-        foreach ($basket as $basketItem) {
-            $ids[]                                                      = $basketItem->getProductId();
-            $arResult["items"][$basketItem->getProductId()]["price"]    = $basketItem->getPrice();
-            $arResult["items"][$basketItem->getProductId()]["quantity"] = $basketItem->getQuantity();
-        }
-        if (!empty($ids)) {
-            $res = CIBlockElement::GetList(
+        if (!empty($order)) {
+            $basket = $order->getBasket();
+
+            $arResult["show"] = "order";
+            $arResult["id"]   = intval($get["order"]);
+            $arResult["sum"]  = $basket->getPrice();
+            $arResult["date"] = $order->getDateInsert();
+
+            foreach ($basket as $basketItem) {
+                $ids[]                                                      = $basketItem->getProductId();
+                $arResult["items"][$basketItem->getProductId()]["price"]    = $basketItem->getPrice();
+                $arResult["items"][$basketItem->getProductId()]["quantity"] = $basketItem->getQuantity();
+            }
+            if (!empty($ids)) {
+                $res = CIBlockElement::GetList(
+                    array(),
+                    array("IBLOCK_ID" => $catalog_id, "ACTIVE" => "Y", "ID" => $ids),
+                    false,
+                    array(),
+                    array(
+                        "ID", "NAME", "PROPERTY_provider", "PROPERTY_CML2_ARTICLE",
+                        "DETAIL_PAGE_URL"
+                    )
+                );
+                while ($ob = $res->GetNext()) {
+                    if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"]) {
+                        $arResult["items"][$ob["ID"]]["id"]   = $ob["ID"];
+                        $arResult["items"][$ob["ID"]]["name"] = $ob["NAME"];
+                        $arResult["items"][$ob["ID"]]["art"]  = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
+                        $arResult["items"][$ob["ID"]]["link"] = $ob["DETAIL_PAGE_URL"];
+                        $arResult["items"][$ob["ID"]]["pro"]  = $ob["PROPERTY_PROVIDER_VALUE"];
+                    } else unset($arResult["items"][$ob["ID"]]);
+                }
+            }
+            $res_order = CIBlockElement::GetList(
                 array(),
-                array("IBLOCK_ID" => $catalog_id, "ACTIVE" => "Y", "ID" => $ids),
+                array("IBLOCK_ID" => $order_id, "ACTIVE" => "Y", "PROPERTY_order" => $arResult["id"]),
                 false,
                 array(),
-                array(
-                    "ID", "NAME", "PROPERTY_provider", "PROPERTY_CML2_ARTICLE",
-                    "DETAIL_PAGE_URL"
-                )
+                array()
             );
-            while ($ob = $res->GetNext()) {
-                if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"]) {
-                    $arResult["items"][$ob["ID"]]["id"]   = $ob["ID"];
-                    $arResult["items"][$ob["ID"]]["name"] = $ob["NAME"];
-                    $arResult["items"][$ob["ID"]]["art"]  = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
-                    $arResult["items"][$ob["ID"]]["link"] = $ob["DETAIL_PAGE_URL"];
-                    $arResult["items"][$ob["ID"]]["pro"]  = $ob["PROPERTY_PROVIDER_VALUE"];
-                } else unset($arResult["items"][$ob["ID"]]);
+            $order_elements = [];
+            while ($ob_order = $res_order->GetNextElement()) {
+                $ob_props = $ob_order->GetProperties();
+                $order_elements = $ob_props["elements"];
+            }
+            foreach ($order_elements["VALUE"] as $i => $order_el) {
+                $item_info = explode("|", $order_el);
+                $arResult["items"][$item_info[0]]["stock"] = $item_info[1];
+                $description = $order_elements["DESCRIPTION"][$i];
+                if (!empty($description)) {
+                    $desc_info = explode("|", $description);
+                    $arResult["items"][$item_info[0]]["new_art"] = (!empty($desc_info[0]) ? $desc_info[0] : '');
+                    $arResult["items"][$item_info[0]]["new_name"] = (!empty($desc_info[1]) ? $desc_info[1] : '');
+                    $arResult["items"][$item_info[0]]["new_cnt"] = (!empty($desc_info[2]) ? $desc_info[2] : '');
+                    $arResult["items"][$item_info[0]]["new_price"] = (!empty($desc_info[3]) ? $desc_info[3] : '');
+                }
             }
         }
-    } else $arResult["error"] = 'Заказ с таким номером не найден!';
+    }
 } elseif (!empty($get["action"])) {
     if ($get["action"] == "show_all") {
         $arResult["show"] = "all";

@@ -42,7 +42,7 @@ if ($arResult["show"] == "order"): ?>
                         <span class="mng-art">
                             <? echo $item["art"]; ?>
                             <span class="change-field change-name">
-                                <input name="new_art[]" type="text" placeholder="Новый артикул">
+                                <input name="new_art[]" value="<?=$item["new_art"]?>" type="text" placeholder="Новый артикул">
                             </span>
                         </span>
                         <span class="mng-name">
@@ -51,26 +51,26 @@ if ($arResult["show"] == "order"): ?>
                                 <? echo $item["name"]; ?>
                             </a>
                             <span class="change-field change-name">
-                                <input name="new_name[]" type="text" placeholder="Новое имя">
+                                <input name="new_name[]" value="<?=$item["new_name"]?>" type="text" placeholder="Новое имя">
                             </span>
                         </span>
                         <span class="mng-cnt">
                             <? echo $item["quantity"]; ?>
                             <span class="change-field change-cnt">
-                                <input name="new_cnt[]" type="text" value="<? echo $item["quantity"]; ?>" placeholder="Количество">
+                                <input name="new_cnt[]" value="<?=$item["new_cnt"]?>" type="text" value="<? echo $item["quantity"]; ?>" placeholder="Количество">
                             </span>
                         </span>
                         <span class="mng-price">
                             <? echo $item["price"]; ?>
                             <span class="change-field change-price">
-                                <input name="new_price[]" type="text" placeholder="Новая цена">
+                                <input name="new_price[]" value="<?=$item["new_price"]?>" type="text" placeholder="Новая цена">
                             </span>
                         </span>
                         <span class="mng-stock">
                             <select name="stock[]" class="js-change-stock">
-                                <option value="available">В наличии</option>
-                                <option value="change">Заменить</option>
-                                <option value="no">Нет в наличии</option>
+                                <option <?=($item["stock"] == "available" ? 'selected' : '')?> value="available">В наличии</option>
+                                <option <?=($item["stock"] == "change" ? 'selected' : '')?> value="change">Заменить</option>
+                                <option <?=($item["stock"] == "no" ? 'selected' : '')?> value="no">Нет в наличии</option>
                             </select>
                             <span class="change-field change-stock">
                                 <svg aria-hidden="true" focusable="false" data-prefix="fal" data-icon="level-down" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512" class="svg-inline--fa fa-level-down fa-w-8 fa-2x"><path fill="currentColor" d="M252.478 408.503l-99.974 99.975c-4.697 4.697-12.311 4.697-17.008 0l-99.974-99.975c-4.696-4.697-4.696-12.311 0-17.008l8.503-8.503c4.697-4.697 12.311-4.697 17.007 0L126 447.959V36H24.024a11.996 11.996 0 0 1-8.485-3.515l-12-12C-4.021 12.926 1.333 0 12.024 0H138c13.255 0 24 10.745 24 24v423.959l64.967-64.966c4.697-4.697 12.311-4.697 17.007 0l8.503 8.503c4.697 4.696 4.697 12.31.001 17.007z" class=""></path></svg>
