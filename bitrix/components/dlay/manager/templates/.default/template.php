@@ -104,10 +104,21 @@ if ($arResult["show"] == "order"): ?>
     </div>
     <div class="mng-show-all"><a href="/manager/?action=show_all">Все заказы</a></div>
 <? elseif ($arResult["show"] == "all"): ?>
-    <? foreach ($arResult["items"] as $item): ?>
-        <div>
-            <a href="/manager/?order=<?=$item["id"]?>">Заказ №<?=$item["id"]?> от <?=date("d.m.Y", strtotime($item["date"]))?></a>
+        <div class="mng-list">
+            <div class="mng-item">
+                <span class="mng-list-name">Заказ</span>
+                <span class="mng-list-date">Дата</span>
+                <span class="mng-list-stock">Статус</span>
+                <span class="mng-list-sum">Сумма</span>
+            </div>
+            <? foreach ($arResult["items"] as $item): ?>
+                <div class="mng-item">
+                    <span class="mng-list-name"><a href="/manager/?order=<?=$item["id"]?>">Заказ №<?=$item["id"]?></a></span>
+                    <span class="mng-list-date"><?=date("d.m.Y", strtotime($item["date"]))?></span>
+                    <span class="mng-list-stock"><?=$item["stock"]?></span>
+                    <span class="mng-list-sum"><?=number_format($item["price"], 2, ".", " ")?> руб.</span>
+                </div>
+            <? endforeach; ?>
         </div>
-    <? endforeach; ?>
 <? endif; ?>
 </div>

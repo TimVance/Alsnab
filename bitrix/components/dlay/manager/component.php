@@ -267,6 +267,8 @@ if (!empty($post["action"])) {
                         if (!empty($cnt)) {
                             $arResult["items"][$arSales["ID"]]["id"]   = $arSales["ID"];
                             $arResult["items"][$arSales["ID"]]["date"] = $order->getDateInsert();
+                            $arResult["items"][$arSales["ID"]]["price"] = $basket->getPrice();
+                            $arResult["items"][$arSales["ID"]]["stock"] = 'Новый';
                         }
                     }
                 }
