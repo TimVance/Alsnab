@@ -100,3 +100,12 @@
 .js-change-apply {
     display: inline-block;
 }
+
+.download-order {
+    float: right;
+}
+
+.download-order svg {
+    width: 24px;
+    height: 24px;
+}

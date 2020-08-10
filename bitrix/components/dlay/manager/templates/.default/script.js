@@ -32,9 +32,8 @@ $(function () {
     // Checked all
     $(".js-change-stock-all").change(function () {
         let value = $(this).val();
-        console.log(".mng-stock select option[value='" + value + "']");
         let items = $(".mng-check input:checked").parents(".mng-item");
-        items.find(".mng-stock select option[value='" + value + "']").prop("selected", true).attr("test", "test");
+        items.find(".mng-stock select option[value='" + value + "']").prop("selected", true);
         $(".js-change-stock").change();
     });
 

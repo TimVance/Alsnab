@@ -195,6 +195,53 @@ if (!empty($post["action"])) {
             }
         }
     }
+    if ($get["download"] == true) {
+        if (!empty($arResult["items"])) {
+            header('Content-Type: application/csv; charset=UTF-8');
+            header('Content-Disposition: attachment; filename="order'.$arResult["id"].'.csv";');
+
+            ob_end_clean();
+
+            $f = fopen('php://output', 'w');
+            fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            $line = array("ID", "Арт.", "Наименование", "Кол-во", "Цена", "Наличие");
+            fputcsv($f, $line, ";");
+
+            $stocks = array(
+                "available" => "В наличии",
+                "change" => "Замена",
+                "no" => "Нет в наличии"
+            );
+
+            foreach ($arResult["items"] as $item) {
+                $line = array(
+                    $item["id"],
+                    $item["art"],
+                    $item["name"],
+                    $item["quantity"],
+                    $item["price"],
+                    $stocks[$item["stock"]]
+                );
+                fputcsv($f, $line, ";");
+                if ($item["stock"] == "change") {
+                    $line = array(
+                        '',
+                        $item["new_art"],
+                        $item["new_name"],
+                        $item["new_cnt"],
+                        $item["new_price"],
+                        ''
+                    );
+                    fputcsv($f, $line, ";");
+                }
+            }
+
+            fclose($f);
+            ob_flush();
+            exit();
+        }
+    }
 } elseif (!empty($get["action"])) {
     if ($get["action"] == "show_all") {
         $arResult["show"] = "all";
