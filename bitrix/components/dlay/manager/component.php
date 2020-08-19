@@ -11,9 +11,10 @@ global $USER;
 
 $catalog_id        = 29;
 $order_id          = 37;
+$providers_id      = 35;
 $arResult["error"] = '';
-$user_id = $USER->GetId();
-$is_admin = $arResult["is_admin"] = $USER->IsAdmin();
+$user_id           = $USER->GetId();
+$is_admin          = $arResult["is_admin"] = $USER->IsAdmin();
 
 
 if (!empty($post["action"])) {
@@ -95,7 +96,7 @@ if (!empty($post["action"])) {
     } else $arResult["error"] = 'Неизвестное действие!';
 } elseif (!empty($get["order"])) {
     $arResult["status"] = 'Новый';
-    $res_orders = CIBlockElement::GetList(
+    $res_orders         = CIBlockElement::GetList(
         array(),
         array("IBLOCK_ID" => $order_id, "ACTIVE" => "Y", "PROPERTY_id" => intval($get["order"])),
         false,
@@ -133,7 +134,18 @@ if (!empty($post["action"])) {
                     )
                 );
                 while ($ob = $res->GetNext()) {
-                    if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"] || $is_admin) {
+
+                    $res_providers = CIBlockElement::GetList(
+                        array(),
+                        array("IBLOCK_ID" => $providers_id, "ACTIVE" => "Y", "ID" => $ob["PROPERTY_PROVIDER_VALUE"]),
+                        false,
+                        array(),
+                        array("ID", "IBLOCK_ID", "PROPERTY_manager")
+                    );
+                    while ($res_provider = $res_providers->GetNext())
+                        $res_provider_info = $res_provider;
+
+                    if ($user_id == $res_provider_info["PROPERTY_MANAGER_VALUE"] || $is_admin) {
                         $arResult["items"][$ob["ID"]]["id"]   = $ob["ID"];
                         $arResult["items"][$ob["ID"]]["name"] = $ob["NAME"];
                         $arResult["items"][$ob["ID"]]["art"]  = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
@@ -174,7 +186,18 @@ if (!empty($post["action"])) {
                     )
                 );
                 while ($ob = $res->GetNext()) {
-                    if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"] || $is_admin) {
+
+                    $res_providers = CIBlockElement::GetList(
+                        array(),
+                        array("IBLOCK_ID" => $providers_id, "ACTIVE" => "Y", "ID" => $ob["PROPERTY_PROVIDER_VALUE"]),
+                        false,
+                        array(),
+                        array("ID", "IBLOCK_ID", "PROPERTY_manager")
+                    );
+                    while ($res_provider = $res_providers->GetNext())
+                        $res_provider_info = $res_provider;
+
+                    if ($user_id == $res_provider_info["PROPERTY_MANAGER_VALUE"] || $is_admin) {
                         $arResult["items"][$ob["ID"]]["id"]   = $ob["ID"];
                         $arResult["items"][$ob["ID"]]["name"] = $ob["NAME"];
                         $arResult["items"][$ob["ID"]]["art"]  = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
@@ -196,15 +219,17 @@ if (!empty($post["action"])) {
                 $order_elements = $ob_props["elements"];
             }
             foreach ($order_elements["VALUE"] as $i => $order_el) {
-                $item_info                                 = explode("|", $order_el);
-                $arResult["items"][$item_info[0]]["stock"] = $item_info[1];
-                $description                               = $order_elements["DESCRIPTION"][$i];
-                if (!empty($description)) {
-                    $desc_info                                     = explode("|", $description);
-                    $arResult["items"][$item_info[0]]["new_art"]   = (!empty($desc_info[0]) ? $desc_info[0] : '');
-                    $arResult["items"][$item_info[0]]["new_name"]  = (!empty($desc_info[1]) ? $desc_info[1] : '');
-                    $arResult["items"][$item_info[0]]["new_cnt"]   = (!empty($desc_info[2]) ? $desc_info[2] : '');
-                    $arResult["items"][$item_info[0]]["new_price"] = (!empty($desc_info[3]) ? $desc_info[3] : '');
+                $item_info = explode("|", $order_el);
+                if (!empty($arResult["items"][$item_info[0]])) {
+                    $arResult["items"][$item_info[0]]["stock"] = $item_info[1];
+                    $description                               = $order_elements["DESCRIPTION"][$i];
+                    if (!empty($description)) {
+                        $desc_info                                     = explode("|", $description);
+                        $arResult["items"][$item_info[0]]["new_art"]   = (!empty($desc_info[0]) ? $desc_info[0] : '');
+                        $arResult["items"][$item_info[0]]["new_name"]  = (!empty($desc_info[1]) ? $desc_info[1] : '');
+                        $arResult["items"][$item_info[0]]["new_cnt"]   = (!empty($desc_info[2]) ? $desc_info[2] : '');
+                        $arResult["items"][$item_info[0]]["new_price"] = (!empty($desc_info[3]) ? $desc_info[3] : '');
+                    }
                 }
             }
         }
@@ -212,7 +237,7 @@ if (!empty($post["action"])) {
     if ($get["download"] == true) {
         if (!empty($arResult["items"])) {
             header('Content-Type: application/csv; charset=UTF-8');
-            header('Content-Disposition: attachment; filename="order'.$arResult["id"].'.csv";');
+            header('Content-Disposition: attachment; filename="order' . $arResult["id"] . '.csv";');
 
             ob_end_clean();
 
@@ -224,8 +249,8 @@ if (!empty($post["action"])) {
 
             $stocks = array(
                 "available" => "В наличии",
-                "change" => "Замена",
-                "no" => "Нет в наличии"
+                "change"    => "Замена",
+                "no"        => "Нет в наличии"
             );
 
             foreach ($arResult["items"] as $item) {
@@ -279,8 +304,8 @@ if (!empty($post["action"])) {
                             array()
                         );
                         if (!empty($cnt)) {
-                            $arResult["items"][$arSales["ID"]]["id"]   = $arSales["ID"];
-                            $arResult["items"][$arSales["ID"]]["date"] = $order->getDateInsert();
+                            $arResult["items"][$arSales["ID"]]["id"]    = $arSales["ID"];
+                            $arResult["items"][$arSales["ID"]]["date"]  = $order->getDateInsert();
                             $arResult["items"][$arSales["ID"]]["price"] = $basket->getPrice();
                             $arResult["items"][$arSales["ID"]]["stock"] = 'Новый';
                         }

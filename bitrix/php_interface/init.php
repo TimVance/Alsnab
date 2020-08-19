@@ -89,9 +89,9 @@ function sendMailManager() {
                             [],
                             ["ID", "IBLOCK_ID", "PROPERTY_status"]
                         );
-                        while ($order_iblock_item = $order_iblock_res->GetNext());
-                        if (!empty($order_iblock_item["ID"])) {
-                            CIBlockElement::SetPropertyValuesEx($order_iblock_item["ID"], false, ["status" => 321]);
+                        while ($order_iblock_item = $order_iblock_res->GetNext()) $order_iblock_item_info = $order_iblock_item;
+                        if (!empty($order_iblock_item_info["ID"])) {
+                            CIBlockElement::SetPropertyValuesEx($order_iblock_item_info["ID"], false, ["status" => 321]);
                         }
                         else {
                             $el = new CIBlockElement;
