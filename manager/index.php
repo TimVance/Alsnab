@@ -1,6 +1,6 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
-$APPLICATION->SetTitle("Менеджер");
+$APPLICATION->SetTitle("Менеджер заказов");
 ?>
 
 <?$APPLICATION->IncludeComponent("dlay:manager", "", array());?>

@@ -12,8 +12,9 @@ global $USER;
 $catalog_id        = 29;
 $order_id          = 37;
 $arResult["error"] = '';
-//$user_id = $USER->GetId();
-$user_id = 15066;
+$user_id = $USER->GetId();
+$is_admin = $arResult["is_admin"] = $USER->IsAdmin();
+
 
 if (!empty($post["action"])) {
     if ($post["action"] == "write") {
@@ -37,6 +38,9 @@ if (!empty($post["action"])) {
             $PROP      = array();
             $PROP[655] = $post["order"];
 
+            if ($is_admin) $PROP[657] = 322;
+            else $PROP[657] = 318;
+
             foreach ($post["product_id"] as $i => $value) {
                 $PROP[656][$i]["VALUE"] = $post["product_id"][$i] . '|' . $post["stock"][$i];
                 if ($post["stock"][$i] == "change") {
@@ -45,7 +49,7 @@ if (!empty($post["action"])) {
             }
 
             $arLoadProductArray = array(
-                "MODIFIED_BY"     => $USER->GetID(),
+                "MODIFIED_BY"     => $user_id,
                 "IBLOCK_ID"       => $order_id,
                 "PROPERTY_VALUES" => $PROP,
                 "NAME"            => 'Заказ №' . $post["order"],
@@ -62,6 +66,9 @@ if (!empty($post["action"])) {
             $PROP      = array();
             $PROP[655] = $post["order"];
 
+            if ($is_admin) $PROP[657] = 322;
+            else $PROP[657] = 318;
+
             foreach ($post["product_id"] as $i => $value) {
                 $PROP[656][$i]["VALUE"] = $post["product_id"][$i] . '|' . $post["stock"][$i];
                 if ($post["stock"][$i] == "change") {
@@ -70,7 +77,7 @@ if (!empty($post["action"])) {
             }
 
             $arLoadProductArray = array(
-                "MODIFIED_BY"     => $USER->GetID(),
+                "MODIFIED_BY"     => $user_id,
                 "IBLOCK_ID"       => $order_id,
                 "PROPERTY_VALUES" => $PROP,
                 "NAME"            => 'Заказ №' . $post["order"],
@@ -87,14 +94,18 @@ if (!empty($post["action"])) {
         }
     } else $arResult["error"] = 'Неизвестное действие!';
 } elseif (!empty($get["order"])) {
+    $arResult["status"] = 'Новый';
     $res_orders = CIBlockElement::GetList(
         array(),
         array("IBLOCK_ID" => $order_id, "ACTIVE" => "Y", "PROPERTY_id" => intval($get["order"])),
+        false,
         array(),
-        array(),
-        array()
+        array("ID", "IBLOCK_ID", "PROPERTY_status")
     );
-    if (empty($res_orders)) {
+    while ($res_orders_item = $res_orders->GetNext()) {
+        $res_orders_item_res = $res_orders_item;
+    }
+    if (empty($res_orders_item_res["ID"])) {
         $order = Sale\Order::load(intval($get["order"]));
         if (!empty($order)) {
             $basket = $order->getBasket();
@@ -122,7 +133,7 @@ if (!empty($post["action"])) {
                     )
                 );
                 while ($ob = $res->GetNext()) {
-                    if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"]) {
+                    if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"] || $is_admin) {
                         $arResult["items"][$ob["ID"]]["id"]   = $ob["ID"];
                         $arResult["items"][$ob["ID"]]["name"] = $ob["NAME"];
                         $arResult["items"][$ob["ID"]]["art"]  = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
@@ -143,6 +154,9 @@ if (!empty($post["action"])) {
             $arResult["sum"]  = $basket->getPrice();
             $arResult["date"] = $order->getDateInsert();
 
+            if (!empty($res_orders_item_res["PROPERTY_STATUS_VALUE"]))
+                $arResult["status"] = $res_orders_item_res["PROPERTY_STATUS_VALUE"];
+
             foreach ($basket as $basketItem) {
                 $ids[]                                                      = $basketItem->getProductId();
                 $arResult["items"][$basketItem->getProductId()]["price"]    = $basketItem->getPrice();
@@ -160,7 +174,7 @@ if (!empty($post["action"])) {
                     )
                 );
                 while ($ob = $res->GetNext()) {
-                    if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"]) {
+                    if ($user_id == $ob["PROPERTY_PROVIDER_VALUE"] || $is_admin) {
                         $arResult["items"][$ob["ID"]]["id"]   = $ob["ID"];
                         $arResult["items"][$ob["ID"]]["name"] = $ob["NAME"];
                         $arResult["items"][$ob["ID"]]["art"]  = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
