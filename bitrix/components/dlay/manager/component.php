@@ -303,7 +303,7 @@ if (!empty($post["action"])) {
                             false,
                             array()
                         );
-                        if (!empty($cnt)) {
+                        if (!empty($cnt) || $is_admin) {
                             $arResult["items"][$arSales["ID"]]["id"]    = $arSales["ID"];
                             $arResult["items"][$arSales["ID"]]["date"]  = $order->getDateInsert();
                             $arResult["items"][$arSales["ID"]]["price"] = $basket->getPrice();
