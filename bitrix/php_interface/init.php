@@ -23,6 +23,7 @@ function sendMailManager() {
                 [],
                 ["ID", "IBLOCK_ID", "PROPERTY_status"]
             );
+            $info_order_iblock = array();
             while ($order_iblock = $order_iblock_res->GetNext()) {
                 $info_order_iblock = $order_iblock;
             }
