@@ -281,39 +281,37 @@ if (!empty($post["action"])) {
             exit();
         }
     }
-} elseif (!empty($get["action"])) {
-    if ($get["action"] == "show_all") {
-        $arResult["show"] = "all";
-        if (CModule::IncludeModule("sale")):
-            $arFilter = array("@STATUS_ID" => array("N", "S"));
-            $rsSales  = CSaleOrder::GetList(array("DATE_INSERT" => "ASC"), $arFilter);
-            while ($arSales = $rsSales->Fetch()) {
-                $order = Sale\Order::load(intval($arSales["ID"]));
-                if (!empty($order)) {
-                    $basket = $order->getBasket();
-                    $ids    = array();
-                    foreach ($basket as $basketItem) {
-                        $ids[] = $basketItem->getProductId();
-                    }
-                    if (!empty($ids)) {
-                        $cnt = CIBlockElement::GetList(
-                            array(),
-                            array("IBLOCK_ID" => $catalog_id, "ID" => $ids, "PROPERTY_provider" => $user_id),
-                            array(),
-                            false,
-                            array()
-                        );
-                        if (!empty($cnt) || $is_admin) {
-                            $arResult["items"][$arSales["ID"]]["id"]    = $arSales["ID"];
-                            $arResult["items"][$arSales["ID"]]["date"]  = $order->getDateInsert();
-                            $arResult["items"][$arSales["ID"]]["price"] = $basket->getPrice();
-                            $arResult["items"][$arSales["ID"]]["stock"] = 'Новый';
-                        }
+} else {
+    $arResult["show"] = "all";
+    if (CModule::IncludeModule("sale")):
+        $arFilter = array("@STATUS_ID" => array("N", "S"));
+        $rsSales  = CSaleOrder::GetList(array("DATE_INSERT" => "DESC"), $arFilter, false, array("nTopCount" => 30));
+        while ($arSales = $rsSales->Fetch()) {
+            $order = Sale\Order::load(intval($arSales["ID"]));
+            if (!empty($order)) {
+                $basket = $order->getBasket();
+                $ids    = array();
+                foreach ($basket as $basketItem) {
+                    $ids[] = $basketItem->getProductId();
+                }
+                if (!empty($ids)) {
+                    $cnt = CIBlockElement::GetList(
+                        array(),
+                        array("IBLOCK_ID" => $catalog_id, "ID" => $ids, "PROPERTY_provider" => $user_id),
+                        array(),
+                        false,
+                        array()
+                    );
+                    if (!empty($cnt) || $is_admin) {
+                        $arResult["items"][$arSales["ID"]]["id"]    = $arSales["ID"];
+                        $arResult["items"][$arSales["ID"]]["date"]  = $order->getDateInsert();
+                        $arResult["items"][$arSales["ID"]]["price"] = $basket->getPrice();
+                        $arResult["items"][$arSales["ID"]]["stock"] = 'Новый';
                     }
                 }
             }
-        endif;
-    } else $arResult["error"] = 'Неизвестное действие!';
-} else $arResult["error"] = 'Не указан номер заказа!';
+        }
+    endif;
+}
 
 $this->IncludeComponentTemplate();

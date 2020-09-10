@@ -4,18 +4,13 @@
  * @var array $arResult
  */
 
-/*
-echo '<pre>';
-print_r($arResult);
-echo '</pre>';
-*/
-
 ?><div class="mng-wrapper"><?
 
 
 if (!empty($arResult["error"])) {
     echo $arResult["error"];
 }
+
 
 if ($arResult["show"] == "order"): ?>
     <? if (!empty($arResult["items"])): ?>
@@ -39,6 +34,7 @@ if ($arResult["show"] == "order"): ?>
                         <span class="mng-stock">Наличие</span>
                     </div>
                     <?php foreach ($arResult["items"] as $item): ?>
+                        <? if (empty($item["name"])) continue; ?>
                         <div class="mng-item">
 
                             <input type="hidden" name="product_id[]" value="<? echo $item["id"]; ?>">
@@ -111,7 +107,7 @@ if ($arResult["show"] == "order"): ?>
                 </div>
             </form>
         </div>
-        <div class="mng-show-all"><a href="/manager/?action=show_all">Все заказы</a></div>
+        <div class="mng-show-all"><a href="/manager/">Все заказы</a></div>
     <? else: ?>
         <p>Заказ недоступен!</p>
     <? endif; ?>
