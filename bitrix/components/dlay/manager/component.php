@@ -89,7 +89,11 @@ if (!empty($post["action"])) {
             $res        = $el->Update($PRODUCT_ID, $arLoadProductArray);
 
             if ($res)
-                $arResult["error"] = "Заказ успешно обновлен!";
+                $arResult["error"] = '
+                    Заказ успешно обновлен! <br>
+                    <div class="mng-show-all"><a href="/manager/?order='.$post["order"].'">Вернуться к заказу</a></div>
+                    <div class="mng-show-all"><a href="/manager/">Все заказы</a></div>
+                ';
             else
                 $arResult["error"] = "Error: " . $res->LAST_ERROR;
         }
@@ -103,6 +107,7 @@ if (!empty($post["action"])) {
         array(),
         array("ID", "IBLOCK_ID", "PROPERTY_status")
     );
+    $res_orders_item_res = array();
     while ($res_orders_item = $res_orders->GetNext()) {
         $res_orders_item_res = $res_orders_item;
     }
@@ -285,7 +290,12 @@ if (!empty($post["action"])) {
     $arResult["show"] = "all";
     if (CModule::IncludeModule("sale")):
         $arFilter = array("@STATUS_ID" => array("N", "S"));
-        $rsSales  = CSaleOrder::GetList(array("DATE_INSERT" => "DESC"), $arFilter, false, array("nTopCount" => 30));
+        $rsSales  = CSaleOrder::GetList(
+            array("DATE_INSERT" => "DESC"),
+            $arFilter,
+            false,
+            array("nTopCount" => 30)
+        );
         while ($arSales = $rsSales->Fetch()) {
             $order = Sale\Order::load(intval($arSales["ID"]));
             if (!empty($order)) {
@@ -303,10 +313,80 @@ if (!empty($post["action"])) {
                         array()
                     );
                     if (!empty($cnt) || $is_admin) {
+
+
+
+                        // Проверка на существование заказа в инфоблоке
+                        $res_orders         = CIBlockElement::GetList(
+                            array(),
+                            array(
+                                "IBLOCK_ID" => $order_id,
+                                "ACTIVE" => "Y",
+                                "PROPERTY_order" => intval($arSales["ID"])
+                            ),
+                            false,
+                            array(),
+                            array("ID", "IBLOCK_ID", "PROPERTY_status")
+                        );
+                        $res_orders_item_res = array();
+                        while ($res_orders_item = $res_orders->GetNext()) {
+                            $res_orders_item_res = $res_orders_item;
+                        }
+                        if (empty($res_orders_item_res["ID"])) {
+                            $arResult["items"][$arSales["ID"]]["price"] = $basket->getPrice();
+                            $arResult["items"][$arSales["ID"]]["stock"] = 'Новый';
+                        }
+                        else {
+                            $arResult["items"][$arSales["ID"]]["price"] = 0;
+                            $arResult["items"][$arSales["ID"]]["stock"] = 'Новый';
+
+                            // Получаем информацию о товарах и заказе
+                            $price = 0;
+                            $arGoods = [];
+                            foreach ($basket as $basketItem) {
+                                $arGoods[$basketItem->getProductId()]["price"]    = $basketItem->getPrice();
+                                $arGoods[$basketItem->getProductId()]["quantity"] = $basketItem->getQuantity();
+                            }
+
+                            $res_order      = CIBlockElement::GetList(
+                                array(),
+                                array("IBLOCK_ID" => $order_id, "ACTIVE" => "Y", "PROPERTY_order" => $arSales["ID"]),
+                                false,
+                                array(),
+                                array()
+                            );
+                            $order_elements = [];
+                            while ($ob_order = $res_order->GetNextElement()) {
+                                $ob_props       = $ob_order->GetProperties();
+                                $order_elements = $ob_props["elements"];
+                            }
+                            foreach ($order_elements["VALUE"] as $i => $order_el) {
+                                $item_info = explode("|", $order_el);
+                                $arGoods[$item_info[0]]["stock"] = $item_info[1];
+                                $description                               = $order_elements["DESCRIPTION"][$i];
+                                if (!empty($description)) {
+                                    $desc_info                                     = explode("|", $description);
+                                    $arGoods[$item_info[0]]["new_cnt"]   = (!empty($desc_info[2]) ? $desc_info[2] : '');
+                                    $arGoods[$item_info[0]]["new_price"] = (!empty($desc_info[3]) ? $desc_info[3] : '');
+                                }
+                            }
+                            foreach ($arGoods as $arGood) {
+                                if (!empty($arGood["stock"])) {
+                                    if ($arGood["stock"] == "available") {
+                                        $price += floatval($arGood["price"]) * floatval($arGood["quantity"]);
+                                    }
+                                    elseif ($arGood["stock"] == "change") {
+                                        $price += floatval($arGood["new_price"]) * floatval($arGood["new_cnt"]);
+                                    }
+                                }
+                                else {
+                                    $price += floatval($arGood["price"]) * floatval($arGood["quantity"]);
+                                }
+                            }
+                            $arResult["items"][$arSales["ID"]]["price"] = $price;
+                        }
                         $arResult["items"][$arSales["ID"]]["id"]    = $arSales["ID"];
                         $arResult["items"][$arSales["ID"]]["date"]  = $order->getDateInsert();
-                        $arResult["items"][$arSales["ID"]]["price"] = $basket->getPrice();
-                        $arResult["items"][$arSales["ID"]]["stock"] = 'Новый';
                     }
                 }
             }
