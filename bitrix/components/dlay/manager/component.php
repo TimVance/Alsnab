@@ -102,7 +102,7 @@ if (!empty($post["action"])) {
     $arResult["status"] = 'Новый';
     $res_orders         = CIBlockElement::GetList(
         array(),
-        array("IBLOCK_ID" => $order_id, "ACTIVE" => "Y", "PROPERTY_id" => intval($get["order"])),
+        array("IBLOCK_ID" => $order_id, "ACTIVE" => "Y", "PROPERTY_order" => intval($get["order"])),
         false,
         array(),
         array("ID", "IBLOCK_ID", "PROPERTY_status")
@@ -147,6 +147,7 @@ if (!empty($post["action"])) {
                         array(),
                         array("ID", "IBLOCK_ID", "PROPERTY_manager")
                     );
+                    $res_provider_info = array();
                     while ($res_provider = $res_providers->GetNext())
                         $res_provider_info = $res_provider;
 
@@ -339,6 +340,9 @@ if (!empty($post["action"])) {
                         else {
                             $arResult["items"][$arSales["ID"]]["price"] = 0;
                             $arResult["items"][$arSales["ID"]]["stock"] = 'Новый';
+
+                            if (!empty($res_orders_item_res["PROPERTY_STATUS_VALUE"]))
+                                $arResult["items"][$arSales["ID"]]["stock"] = $res_orders_item_res["PROPERTY_STATUS_VALUE"];
 
                             // Получаем информацию о товарах и заказе
                             $price = 0;
