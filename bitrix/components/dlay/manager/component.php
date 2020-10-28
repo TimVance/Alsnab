@@ -236,9 +236,19 @@ if (!empty($get["order"])) {
                 array()
             );
             $order_elements = [];
+            $handle = [];
             while ($ob_order = $res_order->GetNextElement()) {
                 $ob_props       = $ob_order->GetProperties();
                 $order_elements = $ob_props["elements"];
+                $handle = $ob_props["handle"]["VALUE"];
+            }
+            if (!empty($handle) && $is_admin) {
+                foreach ($handle as $us) {
+                    $rsUser = CUser::GetByID($us);
+                    $arUser = $rsUser->Fetch();
+                    if (!empty($arUser["ID"]))
+                        $arResult["handle"][] = $arUser;
+                }
             }
             foreach ($order_elements["VALUE"] as $i => $order_el) {
                 $item_info = explode("|", $order_el);
