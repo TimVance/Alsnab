@@ -17,7 +17,10 @@ $user_id           = $USER->GetId();
 $is_admin          = $arResult["is_admin"] = $USER->IsAdmin();
 
 
-if (!empty($post["action"])) {
+if (!empty($get["order"])) {
+
+
+    // Запись заказа
     if ($post["action"] == "write") {
 
         // Проверка на существование заказа
@@ -89,16 +92,14 @@ if (!empty($post["action"])) {
             $res        = $el->Update($PRODUCT_ID, $arLoadProductArray);
 
             if ($res)
-                $arResult["error"] = '
-                    Заказ успешно обновлен! <br>
-                    <div class="mng-show-all"><a href="/manager/?order='.$post["order"].'">Вернуться к заказу</a></div>
-                    <div class="mng-show-all"><a href="/manager/">Все заказы</a></div>
-                ';
+                $arResult["error"] = "Заказ успешно сохранен!";
             else
                 $arResult["error"] = "Error: " . $res->LAST_ERROR;
         }
-    } else $arResult["error"] = 'Неизвестное действие!';
-} elseif (!empty($get["order"])) {
+        // Запись заказа
+    }
+
+
     $arResult["status"] = 'Новый';
     $res_orders         = CIBlockElement::GetList(
         array(),

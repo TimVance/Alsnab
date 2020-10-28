@@ -36,6 +36,7 @@ if ($arResult["show"] == "order"): ?>
                     <div class="mng-item head">
                         <span class="mng-check"><input type="checkbox"></span>
                         <span class="mng-art">Артикул</span>
+                        <span class="mng-id">ID</span>
                         <span class="mng-name">Наименование</span>
                         <span class="mng-cnt">Кол-во</span>
                         <span class="mng-price">Цена</span>
@@ -62,6 +63,9 @@ if ($arResult["show"] == "order"): ?>
                                 <span class="change-field change-name">
                                     <input name="new_art[]" value="<?=$item["new_art"]?>" type="text" placeholder="Новый артикул">
                                 </span>
+                            </span>
+                            <span class="mng-id">
+                                <? echo $item["id"]; ?>
                             </span>
                             <span class="mng-name">
                                 <a title="<?=$item["name"]; ?>" target="_blank" href="<? echo $item["link"]; ?>">
@@ -106,6 +110,7 @@ if ($arResult["show"] == "order"): ?>
                                 <option value="no">Нет в наличии</option>
                             </select>
                         </span>
+                        <span class="id"></span>
                         <span class="mng-name"></span>
                         <span class="mng-cnt"><? if ($is_admin) echo 'Итог:'; ?></span>
                         <span class="mng-price">
