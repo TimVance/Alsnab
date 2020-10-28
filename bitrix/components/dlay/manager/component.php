@@ -25,6 +25,7 @@ if (!empty($get["order"])) {
 
         // Проверка на существование заказа
         $order_exist_id = '';
+        $order_exist_params = [];
         $test_orders    = CIBlockElement::getList(
             array(),
             array("IBLOCK_ID" => $order_id, "PROPERTY_order" => $post["order"]),
@@ -41,6 +42,7 @@ if (!empty($get["order"])) {
 
             $PROP      = array();
             $PROP[655] = $post["order"];
+            $PROP[667][] = $user_id;
 
             if ($is_admin) $PROP[657] = 322;
             else $PROP[657] = 318;
@@ -69,6 +71,19 @@ if (!empty($get["order"])) {
 
             $PROP      = array();
             $PROP[655] = $post["order"];
+
+            $handle = [];
+            $res = CIBlockElement::GetProperty($order_id, $order_exist_id, "sort", "asc", array("CODE" => "handle"));
+            while ($ob = $res->GetNext())
+            {
+                $handle[$ob["VALUE"]] = $ob["VALUE"];
+            }
+
+            if (!isset($handle[$user_id])) {
+                $handle[$user_id] = $user_id;
+            }
+
+            $PROP[667] = $handle;
 
             if ($is_admin) $PROP[657] = 322;
             else $PROP[657] = 318;
