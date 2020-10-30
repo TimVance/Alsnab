@@ -24,9 +24,9 @@ if (!empty($get["order"])) {
     if ($post["action"] == "write") {
 
         // Проверка на существование заказа
-        $order_exist_id = '';
+        $order_exist_id     = '';
         $order_exist_params = [];
-        $test_orders    = CIBlockElement::getList(
+        $test_orders        = CIBlockElement::getList(
             array(),
             array("IBLOCK_ID" => $order_id, "PROPERTY_order" => $post["order"]),
             false,
@@ -40,17 +40,21 @@ if (!empty($get["order"])) {
         if (empty($order_exist_id)) {
             $el = new CIBlockElement;
 
-            $PROP      = array();
-            $PROP[655] = $post["order"];
+            $PROP        = array();
+            $PROP[655]   = $post["order"];
             $PROP[667][] = $user_id;
 
             if ($is_admin) $PROP[657] = 322;
             else $PROP[657] = 318;
 
             foreach ($post["product_id"] as $i => $value) {
+
+                Cmodule::IncludeModule('catalog');
+                CCatalogProduct::Update($post["product_id"][$i], ["WEIGHT" => floatval($post["weight"][$i])]);
+
                 $PROP[656][$i]["VALUE"] = $post["product_id"][$i] . '|' . $post["stock"][$i];
                 if ($post["stock"][$i] == "change") {
-                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i] . '|' . $post["new_name"][$i] . '|' . $post["new_cnt"][$i] . "|" . $post["new_price"][$i];
+                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i] . '|' . $post["new_name"][$i] . '|' . $post["new_cnt"][$i] . "|" . $post["new_price"][$i] . "|" . $post["new_weight"][$i];
                 }
             }
 
@@ -73,9 +77,8 @@ if (!empty($get["order"])) {
             $PROP[655] = $post["order"];
 
             $handle = [];
-            $res = CIBlockElement::GetProperty($order_id, $order_exist_id, "sort", "asc", array("CODE" => "handle"));
-            while ($ob = $res->GetNext())
-            {
+            $res    = CIBlockElement::GetProperty($order_id, $order_exist_id, "sort", "asc", array("CODE" => "handle"));
+            while ($ob = $res->GetNext()) {
                 $handle[$ob["VALUE"]] = $ob["VALUE"];
             }
 
@@ -89,9 +92,13 @@ if (!empty($get["order"])) {
             else $PROP[657] = 318;
 
             foreach ($post["product_id"] as $i => $value) {
+
+                Cmodule::IncludeModule('catalog');
+                CCatalogProduct::Update($post["product_id"][$i], ["WEIGHT" => floatval($post["weight"][$i])]);
+
                 $PROP[656][$i]["VALUE"] = $post["product_id"][$i] . '|' . $post["stock"][$i];
                 if ($post["stock"][$i] == "change") {
-                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i] . '|' . $post["new_name"][$i] . '|' . $post["new_cnt"][$i] . "|" . $post["new_price"][$i];
+                    $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i] . '|' . $post["new_name"][$i] . '|' . $post["new_cnt"][$i] . "|" . $post["new_price"][$i] . "|" . $post["new_weight"][$i];
                 }
             }
 
@@ -115,8 +122,8 @@ if (!empty($get["order"])) {
     }
 
 
-    $arResult["status"] = 'Новый';
-    $res_orders         = CIBlockElement::GetList(
+    $arResult["status"]  = 'Новый';
+    $res_orders          = CIBlockElement::GetList(
         array(),
         array("IBLOCK_ID" => $order_id, "ACTIVE" => "Y", "PROPERTY_order" => intval($get["order"])),
         false,
@@ -156,7 +163,7 @@ if (!empty($get["order"])) {
                 );
                 while ($ob = $res->GetNext()) {
 
-                    $res_providers = CIBlockElement::GetList(
+                    $res_providers     = CIBlockElement::GetList(
                         array(),
                         array("IBLOCK_ID" => $providers_id, "ACTIVE" => "Y", "ID" => $ob["PROPERTY_PROVIDER_VALUE"]),
                         false,
@@ -204,7 +211,7 @@ if (!empty($get["order"])) {
                     array(),
                     array(
                         "ID", "NAME", "PROPERTY_provider", "PROPERTY_CML2_ARTICLE",
-                        "DETAIL_PAGE_URL"
+                        "DETAIL_PAGE_URL", "CATALOG_WEIGHT"
                     )
                 );
                 while ($ob = $res->GetNext()) {
@@ -220,11 +227,12 @@ if (!empty($get["order"])) {
                         $res_provider_info = $res_provider;
 
                     if ($user_id == $res_provider_info["PROPERTY_MANAGER_VALUE"] || $is_admin) {
-                        $arResult["items"][$ob["ID"]]["id"]   = $ob["ID"];
-                        $arResult["items"][$ob["ID"]]["name"] = $ob["NAME"];
-                        $arResult["items"][$ob["ID"]]["art"]  = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
-                        $arResult["items"][$ob["ID"]]["link"] = $ob["DETAIL_PAGE_URL"];
-                        $arResult["items"][$ob["ID"]]["pro"]  = $ob["PROPERTY_PROVIDER_VALUE"];
+                        $arResult["items"][$ob["ID"]]["id"]     = $ob["ID"];
+                        $arResult["items"][$ob["ID"]]["name"]   = $ob["NAME"];
+                        $arResult["items"][$ob["ID"]]["art"]    = $ob["PROPERTY_CML2_ARTICLE_VALUE"];
+                        $arResult["items"][$ob["ID"]]["link"]   = $ob["DETAIL_PAGE_URL"];
+                        $arResult["items"][$ob["ID"]]["pro"]    = $ob["PROPERTY_PROVIDER_VALUE"];
+                        $arResult["items"][$ob["ID"]]["weight"] = $ob["CATALOG_WEIGHT"];
                     } else unset($arResult["items"][$ob["ID"]]);
                 }
             }
@@ -236,11 +244,11 @@ if (!empty($get["order"])) {
                 array()
             );
             $order_elements = [];
-            $handle = [];
+            $handle         = [];
             while ($ob_order = $res_order->GetNextElement()) {
                 $ob_props       = $ob_order->GetProperties();
                 $order_elements = $ob_props["elements"];
-                $handle = $ob_props["handle"]["VALUE"];
+                $handle         = $ob_props["handle"]["VALUE"];
             }
             if (!empty($handle) && $is_admin) {
                 foreach ($handle as $us) {
@@ -261,6 +269,7 @@ if (!empty($get["order"])) {
                         $arResult["items"][$item_info[0]]["new_name"]  = (!empty($desc_info[1]) ? $desc_info[1] : '');
                         $arResult["items"][$item_info[0]]["new_cnt"]   = (!empty($desc_info[2]) ? $desc_info[2] : '');
                         $arResult["items"][$item_info[0]]["new_price"] = (!empty($desc_info[3]) ? $desc_info[3] : '');
+                        $arResult["items"][$item_info[0]]["new_weight"] = (!empty($desc_info[4]) ? $desc_info[4] : '');
                     }
                 }
             }
@@ -276,7 +285,7 @@ if (!empty($get["order"])) {
             $f = fopen('php://output', 'w');
             fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-            $line = array("ID", "Арт.", "Наименование", "Кол-во", "Цена", "Наличие");
+            $line = array("ID", "Арт.", "Наименование", "Кол-во", "Цена", "Вес", "Наличие");
             fputcsv($f, $line, ";");
 
             $stocks = array(
@@ -292,6 +301,7 @@ if (!empty($get["order"])) {
                     $item["name"],
                     $item["quantity"],
                     $item["price"],
+                    $item["weight"],
                     $stocks[$item["stock"]]
                 );
                 fputcsv($f, $line, ";");
@@ -302,6 +312,7 @@ if (!empty($get["order"])) {
                         $item["new_name"],
                         $item["new_cnt"],
                         $item["new_price"],
+                        $item["new_weight"],
                         ''
                     );
                     fputcsv($f, $line, ";");
@@ -339,7 +350,7 @@ if (!empty($get["order"])) {
                         false,
                         array("ID", "BLOCK_ID", "PROPERTY_manager")
                     );
-                    $provider_id = '';
+                    $provider_id   = '';
                     while ($provider_res = $providers_res->GetNext()) {
                         $provider_id = $provider_res;
                     }

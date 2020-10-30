@@ -45,6 +45,7 @@ if ($arResult["show"] == "order"): ?>
                         <span class="mng-name">Наименование</span>
                         <span class="mng-cnt">Кол-во</span>
                         <span class="mng-price">Цена</span>
+                        <span class="mng-weight">Вес (грамм)</span>
                         <span class="mng-stock">Наличие</span>
                     </div>
                     <?php foreach ($arResult["items"] as $item): ?>
@@ -93,6 +94,12 @@ if ($arResult["show"] == "order"): ?>
                                     <input name="new_price[]" value="<?=$item["new_price"]?>" type="text" placeholder="Новая цена">
                                 </span>
                             </span>
+                            <span class="mng-weight">
+                                <input name="weight[]" type="text" value="<?=$item["weight"]?>" placeholder="Вес">
+                                <span class="change-field change-weight">
+                                    <input name="new_weight[]" value="<?=$item["new_weight"]?>" type="text" placeholder="Новый вес">
+                                </span>
+                            </span>
                             <span class="mng-stock">
                                 <select name="stock[]" class="js-change-stock">
                                     <option <?=($item["stock"] == "available" ? 'selected' : '')?> value="available">В наличии</option>
@@ -122,6 +129,7 @@ if ($arResult["show"] == "order"): ?>
                             <? if ($is_admin)
                                 echo number_format($itog, 2, ".", " "); ?>
                         </span>
+                        <span class="mng-weight"></span>
                         <span class="mng-stock"></span>
                     </div>
                 </div>

@@ -73,7 +73,7 @@
     width: 100%;
 }
 
-.change-field input {
+.change-field input, .mng-weight input {
     width: 90%;
     border: 1px solid #ccc !important;
     padding: 5px;
