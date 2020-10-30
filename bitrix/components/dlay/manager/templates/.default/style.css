@@ -119,3 +119,12 @@
     padding: 5px;
     margin: 0 10px;
 }
+
+.upload_files {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.upload_files input {
+    margin: auto;
+}

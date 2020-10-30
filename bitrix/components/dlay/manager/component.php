@@ -23,6 +23,40 @@ if (!empty($get["order"])) {
     // Запись заказа
     if ($post["action"] == "write") {
 
+
+        // Записываем счет
+        $id_element_file = '';
+        if (!empty($_FILES["file"]["tmp_name"])) {
+            $uploads_dir = $_SERVER['DOCUMENT_ROOT'] . '/upload/tmp/orders_bills/';
+
+            if (!file_exists($uploads_dir)) {
+                mkdir($uploads_dir, 0777, true);
+            }
+
+            $name = $uploads_dir . rand(1, 9999) . "_" . time();
+
+            move_uploaded_file($_FILES["file"]["tmp_name"], $name);
+
+            $el_file   = new CIBlockElement;
+            $PROP      = array();
+            $PROP[669] = CFile::MakeFileArray($name);
+
+            $arLoadProductArray = array(
+                "MODIFIED_BY"     => $USER->GetID(),
+                "IBLOCK_ID"       => 39,
+                "PROPERTY_VALUES" => $PROP,
+                "NAME"            => $user_id,
+                "ACTIVE"          => "Y",
+            );
+
+            if ($PRODUCT_ID = $el_file->Add($arLoadProductArray)) {
+                $id_element_file = $PRODUCT_ID;
+            }
+        }
+
+        // Записываем счет
+
+
         // Проверка на существование заказа
         $order_exist_id     = '';
         $order_exist_params = [];
@@ -56,6 +90,13 @@ if (!empty($get["order"])) {
                 if ($post["stock"][$i] == "change") {
                     $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i] . '|' . $post["new_name"][$i] . '|' . $post["new_cnt"][$i] . "|" . $post["new_price"][$i] . "|" . $post["new_weight"][$i];
                 }
+            }
+
+            if (!empty($id_element_file)) {
+                $PROP[668][] = [
+                    "VALUE"       => $user_id,
+                    "DESCRIPTION" => $id_element_file
+                ];
             }
 
             $arLoadProductArray = array(
@@ -101,6 +142,24 @@ if (!empty($get["order"])) {
                     $PROP[656][$i]["DESCRIPTION"] = $post["new_art"][$i] . '|' . $post["new_name"][$i] . '|' . $post["new_cnt"][$i] . "|" . $post["new_price"][$i] . "|" . $post["new_weight"][$i];
                 }
             }
+
+            // Запись файлов
+            $prop_files = [];
+            $res        = CIBlockElement::GetProperty($order_id, $order_exist_id, "sort", "asc", array("CODE" => "bills"));
+            while ($ob_f = $res->GetNext()) {
+                $prop_files[$ob_f["VALUE"]] = $ob_f["DESCRIPTION"];
+            }
+
+            if (!empty($id_element_file))
+                $prop_files[$user_id] = $id_element_file;
+
+            foreach ($prop_files as $i_f => $prop_file_desc) {
+                $PROP[668][] = [
+                    "VALUE"       => $i_f,
+                    "DESCRIPTION" => $prop_file_desc
+                ];
+            }
+            // Запись файлов
 
             $arLoadProductArray = array(
                 "MODIFIED_BY"     => $user_id,
@@ -245,17 +304,38 @@ if (!empty($get["order"])) {
             );
             $order_elements = [];
             $handle         = [];
+            $upload_bills   = [];
             while ($ob_order = $res_order->GetNextElement()) {
                 $ob_props       = $ob_order->GetProperties();
                 $order_elements = $ob_props["elements"];
                 $handle         = $ob_props["handle"]["VALUE"];
+                $upload_bills   = $ob_props["bills"];
             }
-            if (!empty($handle) && $is_admin) {
+
+            $upload_bills_array = [];
+            if (!empty($upload_bills["VALUE"])) {
+                foreach ($upload_bills["VALUE"] as $bill_user_index => $bill_user_user) {
+                    $upload_bills_array[$bill_user_user] = $upload_bills["DESCRIPTION"][$bill_user_index];
+                }
+            }
+
+            if (!empty($handle)) {
                 foreach ($handle as $us) {
                     $rsUser = CUser::GetByID($us);
                     $arUser = $rsUser->Fetch();
-                    if (!empty($arUser["ID"]))
-                        $arResult["handle"][] = $arUser;
+                    if (!empty($arUser["ID"])) {
+                        $arResult["handle"][$arUser["ID"]]["user"] = $arUser;
+                        if (!empty($upload_bills_array[$arUser["ID"]])) {
+                            $res_file_prop        = CIBlockElement::GetProperty(39, $upload_bills_array[$arUser["ID"]], "sort", "asc", array("CODE" => "bill"));
+                            $id_file_bill = '';
+                            while ($ob_file_prop = $res_file_prop->GetNext()) {
+                                $id_file_bill = $ob_file_prop["VALUE"];
+                            }
+                            if (!empty($id_file_bill)) {
+                                $arResult["handle"][$arUser["ID"]]["bill"] = CFile::GetPath($id_file_bill);
+                            }
+                        }
+                    }
                 }
             }
             foreach ($order_elements["VALUE"] as $i => $order_el) {
@@ -264,11 +344,11 @@ if (!empty($get["order"])) {
                     $arResult["items"][$item_info[0]]["stock"] = $item_info[1];
                     $description                               = $order_elements["DESCRIPTION"][$i];
                     if (!empty($description)) {
-                        $desc_info                                     = explode("|", $description);
-                        $arResult["items"][$item_info[0]]["new_art"]   = (!empty($desc_info[0]) ? $desc_info[0] : '');
-                        $arResult["items"][$item_info[0]]["new_name"]  = (!empty($desc_info[1]) ? $desc_info[1] : '');
-                        $arResult["items"][$item_info[0]]["new_cnt"]   = (!empty($desc_info[2]) ? $desc_info[2] : '');
-                        $arResult["items"][$item_info[0]]["new_price"] = (!empty($desc_info[3]) ? $desc_info[3] : '');
+                        $desc_info                                      = explode("|", $description);
+                        $arResult["items"][$item_info[0]]["new_art"]    = (!empty($desc_info[0]) ? $desc_info[0] : '');
+                        $arResult["items"][$item_info[0]]["new_name"]   = (!empty($desc_info[1]) ? $desc_info[1] : '');
+                        $arResult["items"][$item_info[0]]["new_cnt"]    = (!empty($desc_info[2]) ? $desc_info[2] : '');
+                        $arResult["items"][$item_info[0]]["new_price"]  = (!empty($desc_info[3]) ? $desc_info[3] : '');
                         $arResult["items"][$item_info[0]]["new_weight"] = (!empty($desc_info[4]) ? $desc_info[4] : '');
                     }
                 }
